@@ -272,6 +272,16 @@
             margin-bottom: 16px;
             font-size: 12px;
         }
+
+        .connection-status {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -279,6 +289,11 @@
     
     <div class="config-panel" id="configPanel" style="display: none;">
         <h3>🔧 Connect Your Dialogflow Bot</h3>
+        
+        <div class="connection-status">
+            ✅ Backend URL: https://chat-backend-xgw9.onrender.com
+        </div>
+
         <div class="config-field">
             <label>Your Project ID *</label>
             <input type="text" id="projectId" placeholder="my-chatbot-project-123">
@@ -303,20 +318,7 @@
                 <option value="zh">Chinese (zh)</option>
             </select>
         </div>
-        <div class="config-field">
-            <label>Integration Method</label>
-            <select id="apiMethod">
-                <option value="webhook">Webhook (Recommended)</option>
-                <option value="rest">Direct REST API</option>
-                <option value="mock">Demo Mode</option>
-            </select>
-            <small style="color: #6b7280; font-size: 11px;">Webhook is easier and more secure</small>
-        </div>
-        <div class="config-field" id="webhookField" style="display: none;">
-            <label>Your Webhook URL</label>
-            <input type="text" id="webhookUrl" placeholder="https://your-server.com/webhook">
-            <small style="color: #6b7280; font-size: 11px;">Your backend endpoint that calls Dialogflow</small>
-        </div>
+        
         <button onclick="connectToDialogflow()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Connect to Your Bot</button>
         <button onclick="toggleConfig()" style="width: 100%; padding: 8px; background: #f3f4f6; color: #374151; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px;">Close</button>
     </div>
@@ -331,7 +333,7 @@
             <div class="message bot">
                 <div class="message-avatar">🤖</div>
                 <div class="message-bubble">
-                    👋 Hi! I'm ready to connect to your Dialogflow chatbot. Click the ⚙️ button to get started!
+                    👋 Hi! I'm ready to connect to your Dialogflow chatbot. Click the ⚙️ button and enter your Project ID to get started!
                 </div>
             </div>
         </div>
@@ -371,8 +373,7 @@
                     projectId: '',
                     sessionId: 'user-session-123',
                     languageCode: 'en',
-                    apiMethod: 'webhook',
-                    webhookUrl: ''
+                    webhookUrl: 'https://chat-backend-xgw9.onrender.com'
                 };
                 this.initialized = false;
                 this.setupEventListeners();
@@ -386,12 +387,6 @@
                         this.sendMessage();
                     }
                 });
-
-                // Show/hide webhook field based on method selection
-                document.getElementById('apiMethod').addEventListener('change', (e) => {
-                    const webhookField = document.getElementById('webhookField');
-                    webhookField.style.display = e.target.value === 'webhook' ? 'block' : 'none';
-                });
             }
 
             initialize(config) {
@@ -402,12 +397,10 @@
                 document.getElementById('messageInput').disabled = false;
                 document.getElementById('sendButton').disabled = false;
                 
-                const method = this.config.apiMethod;
-                const projectInfo = method === 'webhook' ? 'Webhook Mode' : 
-                                  method === 'rest' ? `Project: ${this.config.projectId}` : 'Demo Mode';
-                
-                this.addMessage('bot', `✅ Connected to your Dialogflow bot! (${projectInfo})`);
-                this.addMessage('bot', `🎯 Try asking me something - I'll use your trained intents and responses!`);
+                this.addMessage('bot', `✅ Connected to your Dialogflow bot!`);
+                this.addMessage('bot', `🎯 Project ID: ${this.config.projectId}`);
+                this.addMessage('bot', `🌐 Backend: https://chat-backend-xgw9.onrender.com`);
+                this.addMessage('bot', `💬 Try asking me something - I'll use your trained intents and responses!`);
                 
                 return true;
             }
@@ -427,29 +420,22 @@
                 this.showTyping(true);
                 
                 try {
-                    let response;
-                    if (this.config.apiMethod === 'webhook' && this.config.webhookUrl) {
-                        response = await this.callWebhook(text);
-                    } else if (this.config.apiMethod === 'rest' && this.config.projectId) {
-                        response = await this.callDialogflowAPI(text);
-                    } else {
-                        response = await this.getMockResponse(text);
-                    }
+                    const response = await this.callWebhook(text);
                     
                     // Hide typing indicator
                     this.showTyping(false);
                     
                     // Add bot response
-                    this.addMessage('bot', response.fulfillmentText || response.message || response.reply);
+                    this.addMessage('bot', response.fulfillmentText || response.message || response.reply || 'I received your message, but got an empty response.');
                     
                 } catch (error) {
                     this.showTyping(false);
+                    console.error('Chat error:', error);
                     this.addMessage('bot', `❌ Connection error: ${error.message}`, true);
                 }
             }
 
             async callWebhook(text) {
-                // Call your backend webhook that handles Dialogflow
                 const response = await fetch(this.config.webhookUrl, {
                     method: 'POST',
                     headers: {
@@ -458,60 +444,18 @@
                     body: JSON.stringify({
                         message: text,
                         sessionId: this.config.sessionId,
-                        languageCode: this.config.languageCode
+                        languageCode: this.config.languageCode,
+                        projectId: this.config.projectId
                     })
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Webhook Error: ${response.status} - Make sure your webhook is running and accessible`);
-                }
-
-                return await response.json();
-            }
-
-            async callDialogflowAPI(text) {
-                // Direct API call to Dialogflow (requires authentication)
-                const endpoint = `https://dialogflow.googleapis.com/v2/projects/${this.config.projectId}/agent/sessions/${this.config.sessionId}:detectIntent`;
-                
-                const requestBody = {
-                    queryInput: {
-                        text: {
-                            text: text,
-                            languageCode: this.config.languageCode
-                        }
-                    }
-                };
-
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer YOUR_ACCESS_TOKEN' // You need to implement OAuth
-                    },
-                    body: JSON.stringify(requestBody)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Dialogflow API Error: ${response.status} - Check your authentication and project ID`);
+                    const errorText = await response.text();
+                    throw new Error(`Backend Error (${response.status}): ${errorText || 'Make sure your backend is running and accessible'}`);
                 }
 
                 const data = await response.json();
-                return data.queryResult;
-            }
-
-            async getMockResponse(text) {
-                // Demo responses that simulate your bot
-                await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
-                
-                const responses = [
-                    "This is a demo response! Connect your real Dialogflow bot to see your trained responses.",
-                    "I'm running in demo mode. Your actual bot responses will appear here once connected.",
-                    "Great question! In real mode, I'd use your Dialogflow intents to answer this.",
-                    "Connect your Dialogflow bot to see how I'll actually respond to this!",
-                    "Demo mode active. Your real bot would handle this query using your trained model."
-                ];
-
-                return { message: responses[Math.floor(Math.random() * responses.length)] };
+                return data;
             }
 
             addMessage(sender, text, isError = false) {
@@ -564,21 +508,15 @@
 
         function connectToDialogflow() {
             const config = {
-                projectId: document.getElementById('projectId').value,
-                sessionId: document.getElementById('sessionId').value,
+                projectId: document.getElementById('projectId').value.trim(),
+                sessionId: document.getElementById('sessionId').value.trim(),
                 languageCode: document.getElementById('languageCode').value,
-                apiMethod: document.getElementById('apiMethod').value,
-                webhookUrl: document.getElementById('webhookUrl').value
+                webhookUrl: 'https://chat-backend-xgw9.onrender.com'
             };
 
             // Validation
-            if (config.apiMethod === 'rest' && !config.projectId) {
-                alert('❌ Please enter your Dialogflow Project ID for REST API mode.');
-                return;
-            }
-
-            if (config.apiMethod === 'webhook' && !config.webhookUrl) {
-                alert('❌ Please enter your webhook URL for webhook mode.');
+            if (!config.projectId) {
+                alert('❌ Please enter your Dialogflow Project ID.');
                 return;
             }
 
