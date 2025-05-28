@@ -246,7 +246,7 @@
             <div class="message bot">
                 <div class="message-avatar">🤖</div>
                 <div class="message-bubble">
-                    👋 Hi! I'm your portfolio assistant. Connecting to Dialogflow...
+                    👋 Hi! I'm your portfolio assistant. Testing connection...
                 </div>
             </div>
         </div>
@@ -283,10 +283,11 @@
         class DialogflowChatbot {
             constructor() {
                 this.config = {
-                    projectId: 'portfoliochatbot-si9l', // Hardcoded project ID
+                    projectId: 'portfoliochatbot-si9l',
                     sessionId: this.generateSessionId(),
                     languageCode: 'en',
-                    webhookUrl: 'https://chat-backend-xgw9.onrender.com/webhook'
+                    webhookUrl: 'https://chat-backend-xgw9.onrender.com/webhook',
+                    healthUrl: 'https://chat-backend-xgw9.onrender.com/health'
                 };
                 this.initialized = false;
                 this.setupEventListeners();
@@ -309,10 +310,15 @@
 
             async autoConnect() {
                 try {
-                    this.showConnectionStatus('Connecting to Dialogflow...', 'connecting');
+                    this.showConnectionStatus('Checking backend connection...', 'connecting');
                     
-                    // Test connection with a simple message
-                    await this.testConnection();
+                    // First test backend health
+                    await this.testBackendHealth();
+                    
+                    this.showConnectionStatus('Backend connected! Testing Dialogflow...', 'connecting');
+                    
+                    // Then test Dialogflow connection
+                    await this.testDialogflowConnection();
                     
                     this.initialized = true;
                     
@@ -331,35 +337,78 @@
                     
                 } catch (error) {
                     console.error('Connection failed:', error);
-                    this.showConnectionStatus('❌ Connection failed. Please try again.', 'error');
-                    this.addMessage('bot', `⚠️ I'm having trouble connecting. You can still try chatting!`, true);
                     
-                    // Still enable input so user can try
-                    document.getElementById('messageInput').disabled = false;
-                    document.getElementById('sendButton').disabled = false;
+                    // Show specific error messages
+                    if (error.message.includes('Backend')) {
+                        this.showConnectionStatus('❌ Backend server not responding', 'error');
+                        this.addMessage('bot', `⚠️ Backend server issue: ${error.message}`, true);
+                    } else if (error.message.includes('Dialogflow')) {
+                        this.showConnectionStatus('❌ Dialogflow connection failed', 'error');
+                        this.addMessage('bot', `⚠️ Dialogflow service issue. You can try chatting - it might work!`, true);
+                        
+                        // Still enable input for manual testing
+                        document.getElementById('messageInput').disabled = false;
+                        document.getElementById('sendButton').disabled = false;
+                    } else {
+                        this.showConnectionStatus('❌ Connection failed', 'error');
+                        this.addMessage('bot', `⚠️ ${error.message}`, true);
+                        
+                        // Still enable input so user can try
+                        document.getElementById('messageInput').disabled = false;
+                        document.getElementById('sendButton').disabled = false;
+                    }
                 }
             }
 
-            async testConnection() {
-                const response = await fetch(this.config.webhookUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        message: 'hello',
-                        sessionId: this.config.sessionId,
-                        languageCode: this.config.languageCode,
-                        projectId: this.config.projectId
-                    })
-                });
+            async testBackendHealth() {
+                try {
+                    const response = await fetch(this.config.healthUrl, {
+                        method: 'GET'
+                    });
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Backend Error (${response.status}): ${errorText}`);
+                    if (!response.ok) {
+                        throw new Error(`Backend server returned ${response.status}`);
+                    }
+
+                    const healthData = await response.json();
+                    console.log('Backend health:', healthData);
+                    
+                    if (!healthData.dialogflowConnected) {
+                        throw new Error('Backend reports Dialogflow not connected');
+                    }
+
+                    return healthData;
+                } catch (error) {
+                    throw new Error(`Backend connection failed: ${error.message}`);
                 }
+            }
 
-                return response.json();
+            async testDialogflowConnection() {
+                try {
+                    const response = await fetch(this.config.webhookUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            message: 'test connection',
+                            sessionId: this.config.sessionId,
+                            languageCode: this.config.languageCode,
+                            projectId: this.config.projectId
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Dialogflow test failed (${response.status}): ${errorText}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('Dialogflow test successful:', data);
+                    return data;
+                } catch (error) {
+                    throw new Error(`Dialogflow connection failed: ${error.message}`);
+                }
             }
 
             showConnectionStatus(message, type) {
