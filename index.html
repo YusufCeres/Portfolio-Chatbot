@@ -313,7 +313,7 @@
                     this.showConnectionStatus('Connecting to your Dialogflow bot...', 'connecting');
                     
                     // Test the backend connection
-                    const testResponse = await fetch(this.config.webhookUrl + '/health', {
+                    const testResponse = await fetch('https://chat-backend-xgw9.onrender.com/health', {
                         method: 'GET',
                         headers: {
                             'Content-Type': 'application/json',
