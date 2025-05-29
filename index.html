@@ -97,6 +97,9 @@
             border-radius: 18px;
             font-size: 14px;
             line-height: 1.4;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
 
         .message.bot .message-bubble {
@@ -110,6 +113,16 @@
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
             border-bottom-right-radius: 6px;
+        }
+
+        .message-bubble a {
+            color: #4facfe;
+            text-decoration: underline;
+            word-break: break-all;
+        }
+
+        .message.user .message-bubble a {
+            color: #e0f2fe;
         }
 
         .message-avatar {
@@ -428,6 +441,25 @@
                 return data;
             }
 
+            // Function to process text and convert URLs to links
+            processMessageText(text) {
+                // Check if message matches the pattern you specified
+                const pattern = /^Sure!\s*Here's my\s+(.+?):\s+(https?:\/\/[^\s]+\.(pdf|png))/i;
+                const match = text.match(pattern);
+                
+                if (match) {
+                    const description = match[1];
+                    const url = match[2];
+                    const extension = match[3].toUpperCase();
+                    
+                    return `Sure! Here's my ${description}: <a href="${url}" target="_blank" rel="noopener noreferrer">Download ${extension}</a>`;
+                }
+                
+                // General URL detection for any http/https links ending in .pdf or .png
+                const urlPattern = /(https?:\/\/[^\s]+\.(pdf|png))/gi;
+                return text.replace(urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+            }
+
             addMessage(sender, text, isError = false) {
                 const messagesContainer = document.getElementById('chatMessages');
                 const messageDiv = document.createElement('div');
@@ -439,7 +471,13 @@
 
                 const bubble = document.createElement('div');
                 bubble.className = 'message-bubble';
-                bubble.textContent = text;
+                
+                // Process text for URLs if it's a bot message
+                if (sender === 'bot' && !isError) {
+                    bubble.innerHTML = this.processMessageText(text);
+                } else {
+                    bubble.textContent = text;
+                }
 
                 if (isError) {
                     bubble.style.background = '#fee2e2';
