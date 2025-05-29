@@ -125,6 +125,24 @@
             color: #e0f2fe;
         }
 
+        .message-bubble strong {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .message.user .message-bubble strong {
+            color: #ffffff;
+        }
+
+        .message-bubble em {
+            font-style: italic;
+            color: #6b7280;
+        }
+
+        .message.user .message-bubble em {
+            color: #e0f2fe;
+        }
+
         .message-avatar {
             width: 32px;
             height: 32px;
@@ -453,6 +471,31 @@
                     const extension = match[3].toUpperCase();
                     
                     return `Sure! Here's my ${description}: <a href="${url}" target="_blank" rel="noopener noreferrer">Download ${extension}</a>`;
+                }
+                
+                // Check for contact information formatting
+                if (text.includes("You can contact me either")) {
+                    // Make phone number clickable
+                    text = text.replace(/(\d{10})/g, '<a href="tel:$1">$1</a>');
+                    // Make email clickable
+                    text = text.replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1">$1</a>');
+                }
+                
+                // Check for portfolio assistant summary formatting
+                if (text.includes("I'm your portfolio assistant! Here's what I can help you with:")) {
+                    // Format the summary with proper HTML
+                    text = text
+                        // Make section headers bold
+                        .replace(/📋 \*\*Professional Information:\*\*/g, '<strong>📋 Professional Information:</strong>')
+                        .replace(/💼 \*\*Projects & Work:\*\*/g, '<strong>💼 Projects & Work:</strong>')
+                        .replace(/🎓 \*\*Academic & Skills:\*\*/g, '<strong>🎓 Academic & Skills:</strong>')
+                        .replace(/📍 \*\*Personal Details:\*\*/g, '<strong>📍 Personal Details:</strong>')
+                        .replace(/🎯 \*\*Interactive Features:\*\*/g, '<strong>🎯 Interactive Features:</strong>')
+                        // Convert line breaks and format as HTML list
+                        .replace(/\n- /g, '<br>• ')
+                        .replace(/\n/g, '<br>')
+                        // Make italic text properly formatted
+                        .replace(/\*([^*]+)\*/g, '<em>$1</em>');
                 }
                 
                 // General URL detection for any http/https links ending in .pdf or .png
