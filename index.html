@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio Chatbot</title>
     <style>
+        :root {
+            --portfolio-navy: #0a192f;
+            --portfolio-lightNavy: #112240;
+            --portfolio-lightestNavy: #233554;
+            --portfolio-slate: #8892b0;
+            --portfolio-lightSlate: #a8b2d1;
+            --portfolio-lightestSlate: #ccd6f6;
+            --portfolio-teal: #64ffda;
+            --portfolio-white: #e6f1ff;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,8 +23,8 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--portfolio-navy);
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -23,25 +34,28 @@
         .chat-container {
             width: 400px;
             height: 600px;
-            background: white;
+            background: var(--portfolio-lightNavy);
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 1px solid var(--portfolio-lightestNavy);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
         .chat-header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
+            background: var(--portfolio-lightestNavy);
+            color: var(--portfolio-lightestSlate);
             padding: 20px;
             text-align: center;
             position: relative;
+            border-bottom: 1px solid var(--portfolio-lightestNavy);
         }
 
         .chat-header h1 {
             font-size: 20px;
             font-weight: 600;
+            color: var(--portfolio-lightestSlate);
         }
 
         .status-indicator {
@@ -52,7 +66,7 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #4ade80;
+            background: var(--portfolio-teal);
             animation: pulse 2s infinite;
         }
 
@@ -65,7 +79,7 @@
             flex: 1;
             padding: 20px;
             overflow-y: auto;
-            background: #f8fafc;
+            background: var(--portfolio-navy);
         }
 
         .message {
@@ -103,44 +117,45 @@
         }
 
         .message.bot .message-bubble {
-            background: white;
-            color: #374151;
-            border: 1px solid #e5e7eb;
+            background: var(--portfolio-lightNavy);
+            color: var(--portfolio-lightSlate);
+            border: 1px solid var(--portfolio-lightestNavy);
             border-bottom-left-radius: 6px;
         }
 
         .message.user .message-bubble {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
+            background: var(--portfolio-teal);
+            color: var(--portfolio-navy);
             border-bottom-right-radius: 6px;
         }
 
         .message-bubble a {
-            color: #4facfe;
+            color: var(--portfolio-teal);
             text-decoration: underline;
             word-break: break-all;
         }
 
         .message.user .message-bubble a {
-            color: #e0f2fe;
+            color: var(--portfolio-navy);
+            font-weight: 600;
         }
 
         .message-bubble strong {
             font-weight: 600;
-            color: #1f2937;
+            color: var(--portfolio-lightestSlate);
         }
 
         .message.user .message-bubble strong {
-            color: #ffffff;
+            color: var(--portfolio-navy);
         }
 
         .message-bubble em {
             font-style: italic;
-            color: #6b7280;
+            color: var(--portfolio-slate);
         }
 
         .message.user .message-bubble em {
-            color: #e0f2fe;
+            color: var(--portfolio-lightNavy);
         }
 
         .message-avatar {
@@ -156,19 +171,20 @@
         }
 
         .message.bot .message-avatar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: var(--portfolio-lightestNavy);
+            color: var(--portfolio-teal);
+            border: 1px solid var(--portfolio-teal);
         }
 
         .message.user .message-avatar {
-            background: #f3f4f6;
-            color: #374151;
+            background: var(--portfolio-slate);
+            color: var(--portfolio-navy);
         }
 
         .chat-input {
             padding: 20px;
-            background: white;
-            border-top: 1px solid #e5e7eb;
+            background: var(--portfolio-lightNavy);
+            border-top: 1px solid var(--portfolio-lightestNavy);
         }
 
         .input-container {
@@ -180,15 +196,21 @@
         .message-input {
             flex: 1;
             padding: 12px 16px;
-            border: 2px solid #e5e7eb;
+            border: 2px solid var(--portfolio-lightestNavy);
             border-radius: 25px;
             font-size: 14px;
             outline: none;
             transition: border-color 0.2s;
+            background: var(--portfolio-navy);
+            color: var(--portfolio-lightSlate);
         }
 
         .message-input:focus {
-            border-color: #4facfe;
+            border-color: var(--portfolio-teal);
+        }
+
+        .message-input::placeholder {
+            color: var(--portfolio-slate);
         }
 
         .send-button {
@@ -196,23 +218,25 @@
             height: 45px;
             border: none;
             border-radius: 50%;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
+            background: var(--portfolio-teal);
+            color: var(--portfolio-navy);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.2s;
+            transition: transform 0.2s, background-color 0.2s;
         }
 
         .send-button:hover {
             transform: scale(1.05);
+            background: #4fd1c7;
         }
 
         .send-button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none;
+            background: var(--portfolio-slate);
         }
 
         .typing-indicator {
@@ -231,7 +255,7 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #9ca3af;
+            background: var(--portfolio-slate);
             animation: typing 1.4s infinite;
         }
 
@@ -244,23 +268,43 @@
         }
 
         .connection-status {
-            background: #d1fae5;
-            color: #065f46;
+            background: var(--portfolio-lightestNavy);
+            color: var(--portfolio-teal);
             padding: 10px;
             border-radius: 8px;
             margin: 10px 20px;
             font-size: 12px;
             text-align: center;
+            border: 1px solid var(--portfolio-teal);
         }
 
         .error-status {
-            background: #fee2e2;
-            color: #dc2626;
+            background: var(--portfolio-lightestNavy);
+            color: #ff6b6b;
             padding: 10px;
             border-radius: 8px;
             margin: 10px 20px;
             font-size: 12px;
             text-align: center;
+            border: 1px solid #ff6b6b;
+        }
+
+        /* Scrollbar styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--portfolio-navy);
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--portfolio-lightestNavy);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--portfolio-slate);
         }
     </style>
 </head>
@@ -523,9 +567,9 @@
                 }
 
                 if (isError) {
-                    bubble.style.background = '#fee2e2';
-                    bubble.style.color = '#dc2626';
-                    bubble.style.border = '1px solid #fecaca';
+                    bubble.style.background = 'var(--portfolio-lightestNavy)';
+                    bubble.style.color = '#ff6b6b';
+                    bubble.style.border = '1px solid #ff6b6b';
                 }
 
                 messageDiv.appendChild(avatar);
